@@ -1,0 +1,4 @@
+.artifact_modification_lock
+broken_update.ext4
+core-image-full-cmdline-qemux86-64.ext4
+docker_lock

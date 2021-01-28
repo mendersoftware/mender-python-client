@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -ex
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
+
+mkdir -p yocto
+
+cd yocto
+
+git clone -b ${YOCTO_BRANCH:-dunfell} https://github.com/mendersoftware/poky
+git clone -b ${YOCTO_BRANCH:-dunfell} https://github.com/openembedded/meta-openembedded.git
+git clone -b ${YOCTO_BRANCH:-dunfell} https://github.com/mendersoftware/meta-mender.git
+cp -r ${script_dir}/meta-mender-python-client .
+
+source poky/oe-init-build-env
+
+cp ${script_dir}/{bblayers,local}.conf ./conf
+
+
+if [ -d /mnt/sstate-cache ]; then
+  cat >> ./conf/local.conf <<EOF
+SSTATE_DIR = "/mnt/sstate-cache"
+EOF
+fi
+
+# Build from the PR branch when building in Gitlab
+if [[ -n "${CI_COMMIT_REF_SLUG}" ]] && [[ "${CI_COMMIT_REF_SLUG}" = pr-* ]]; then
+  cat >> ./conf/local.conf <<EOF
+MENDER_PYTHON_CLIENT_BUILD_BRANCH ?= "refs/pull/${CI_COMMIT_REF_SLUG#pr-}/head;nobranch=1"
+EOF
+fi
+
+export LANG=en_US.UTF-8
+bitbake core-image-full-cmdline
+
+../meta-mender/meta-mender-qemu/docker/build-docker qemux86-64 -t mendersoftware/mender-client-qemu:master
+
+docker save mendersoftware/mender-client-qemu:master -o ${CI_PROJECT_DIR}/stage-artifacts/mender-client-qemu.tar

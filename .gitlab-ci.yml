@@ -1,0 +1,164 @@
+stages:
+  - build
+  - test
+
+variables:
+  # Gitlab config
+  GIT_DEPTH: 5
+
+  # Internal address for nfs sstate cache server (northamerica-northeast1-b)
+  SSTATE_CACHE_INTRNL_ADDR: "10.162.0.2"
+
+  # Global environment variables (not meant to be changed)
+  DEBIAN_FRONTEND: noninteractive
+
+  # Docker dind configuration.
+  # To use dind, make sure gitlab-runner's configuration
+  # has a common mount for /certs (i.e. runners.docker.volumes) directory
+  # and that the dind service name is always docker (default hostname).
+  DOCKER_HOST: "tcp://docker:2376"
+  DOCKER_CERT_PATH: "/certs/client"
+  DOCKER_TLS_VERIFY: "1"
+  DOCKER_TLS_CERTDIR: "/certs"
+
+  YOCTO_BRANCH: "dunfell"
+
+  LICENSE_HEADERS_IGNORE_FILES_REGEXP: '.*mender_integration.*'
+
+include:
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-commits.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-license.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-github-status-updates.yml'
+  - project: 'Northern.tech/Mender/mendertesting'
+    file: '.gitlab-ci-check-python3-format.yml'
+
+
+build:client:
+  image: mendersoftware/mender-test-containers:mender-client-acceptance-testing
+  stage: build
+  services:
+    - docker:19.03-dind
+  tags:
+    - mender-qa-slave-highcpu
+  before_script:
+    - mkdir -p stage-artifacts
+    - export WORKSPACE=$(realpath ${CI_PROJECT_DIR}/..)
+    - chown -R mender:mender ${WORKSPACE}
+    # Enable nesting VMs
+    - modprobe -r kvm_intel && modprobe kvm_intel nested=Y
+    # Enable NFS cache for yocto
+    - mount.nfs4 ${SSTATE_CACHE_INTRNL_ADDR}:/sstate-cache /mnt/sstate-cache
+  script:
+    - mkdir -p ${WORKSPACE}
+    - cd ${WORKSPACE}
+    - chown -R mender:mender ${WORKSPACE}
+    - export HOME="/home/mender"
+    - sudo -E -u mender ${CI_PROJECT_DIR}/tests/integration/yocto/build-script
+  artifacts:
+    expire_in: 1w
+    paths:
+      - stage-artifacts/
+
+
+test:integration:
+  stage: test
+  image: docker:19.03-dind
+  variables:
+      GIT_SUBMODULE_STRATEGY: recursive
+      MENDER_ARTIFACT_VERSION: 3.4.0
+      DOCKER_CLIENT_TIMEOUT: 300
+      COMPOSE_HTTP_TIMEOUT: 300
+  tags:
+    - mender-qa-slave-highcpu
+  needs:
+      - build:client
+  dependencies:
+      - build:client
+  before_script:
+    - unset DOCKER_HOST
+    - unset DOCKER_TLS_VERIFY
+    - unset DOCKER_CERT_PATH
+    - apk --update add curl jq sysstat docker-compose hdparm
+    - apk --update add xz libc6-compat
+    - apk --update add bash git py-pip gcc make python2-dev
+      libc-dev libffi-dev openssl-dev python3 curl jq sysstat
+    - apk add $(cat tests/integration/mender_integration/tests/requirements/apk-requirements.txt)
+    - pip3 install -r tests/integration/mender_integration/tests/requirements/python-requirements.txt
+    # Install mender-artifact
+    - wget https://downloads.mender.io/mender-artifact/${MENDER_ARTIFACT_VERSION}/linux/mender-artifact
+    - chmod +x ./mender-artifact
+    - mv ./mender-artifact /usr/bin
+    - mender-artifact --version
+    # Start dockerd in the background
+    - /usr/local/bin/dockerd &
+    # Wait for dockerd to start
+    - |-
+      MAX_WAIT=30
+      while [ ! -e "/var/run/docker.sock" ] && [ $MAX_WAIT -gt 0 ]; do
+        MAX_WAIT=$(($MAX_WAIT - 1))
+        sleep 1
+      done
+    - pip3 install pytest requests
+    - docker version # Verify that the docker server is up and running
+    - docker load -i stage-artifacts/mender-client-qemu.tar
+  script:
+    - cd tests/integration
+    - ./run.sh test_python_api_client.py
+  artifacts:
+      when: always
+      reports:
+          junit: tests/integration/report.xml
+
+
+
+.test:
+    needs: []
+    cache:
+        key: ${CI_COMMIT_REF_SLUG}
+        paths:
+            - ~/.cache/pip-test/
+
+test:runtime:
+    extends: .test
+    stage: test
+    image: python:3.6-buster
+    before_script:
+        - mkdir -p /var/lib/mender/inventory
+        - mkdir -p /etc/mender
+        - cp support/* /var/lib/mender/inventory/
+        - pip install --cache-dir=~/.cache/pip-test/ .
+    script:
+        - mender-python-client bootstrap
+
+test:static:
+    extends: .test
+    stage: test
+    image: python:3.6-buster
+    before_script:
+        - pip install --cache-dir=~/.cache/pip-test mypy
+        - pip install --cache-dir=~/.cache/pip-test pylint
+        - pip install --cache-dir=~/.cache/pip-test .
+        - pip install --cache-dir=~/.cache/pip-test -r requirements.txt
+        - pip install --cache-dir=~/.cache/pip-test -r tests/unit/requirements.txt
+    script:
+        - mypy src
+        - pylint --rcfile=.pylintrc-develop src
+        - pylint --rcfile=.pylintrc-develop --disable=no-self-use --disable=no-member --disable=too-many-ancestors --disable=protected-access tests/unit/test_*.py
+
+test:unit:
+    extends: .test
+    stage: test
+    image: python:3.6-buster
+    before_script:
+        - pip install --cache-dir=~/.cache/pip-test -r requirements.txt
+        - pip install --cache-dir=~/.cache/pip-test -r tests/unit/requirements.txt
+        - pip install --cache-dir=~/.cache/pip-test -e .
+    script:
+        - pytest --junit-xml=report.xml --cov=src/mender tests/unit && coveralls
+    artifacts:
+        when: always
+        reports:
+            junit: report.xml

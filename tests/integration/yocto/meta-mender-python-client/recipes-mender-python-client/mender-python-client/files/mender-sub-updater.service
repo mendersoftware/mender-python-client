@@ -1,0 +1,14 @@
+[Unit]
+Description=Mender sub-updater script
+Wants=network-online.target
+After=systemd-resolved.service network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/bin/mender-sub-updater
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Mender-Python-client OTA update service
+Wants=network-online.target
+After=systemd-resolved.service network-online.target
+
+[Service]
+Type=idle
+User=root
+Group=root
+ExecStart=/usr/bin/mender-python-client daemon
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
