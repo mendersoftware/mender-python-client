@@ -13,6 +13,7 @@
 #    limitations under the License.
 
 import logging as log
+import os.path
 from typing import Optional
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKeyWithSerialization
@@ -40,6 +41,8 @@ def now(
             private_key = key_already_generated(private_key_path)
         if not private_key:
             log.info("Generating a new RSA key pair..")
+            if force_bootstrap and os.path.exists(private_key_path):
+                os.unlink(private_key_path)
             private_key = key.generate_key()
             key.store_key(private_key, private_key_path)
         log.info("Device bootstrapped successfully")
