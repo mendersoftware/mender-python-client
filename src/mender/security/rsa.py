@@ -47,8 +47,9 @@ def store_key(private_key: RSAPrivateKeyWithSerialization, where: str):
         format=serialization.PrivateFormat.TraditionalOpenSSL,
         encryption_algorithm=serialization.NoEncryption(),
     )
-    with open(where, "wb") as key_file:
-        os.chmod(where, 0o0600)
+    with open(
+        os.open(where, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_TRUNC, 0o0600), "wb"
+    ) as key_file:
         key_file.write(pem)
 
 
