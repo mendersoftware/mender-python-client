@@ -14,22 +14,23 @@
 import logging
 import os.path
 import subprocess
-
 import mender.settings.settings as settings
-
+import mender.client.deployments as deployments
+import mender.client.authorize as authorize
 log = logging.getLogger(__name__)
 
 
-def run_sub_updater(deployment_id: str) -> bool:
+def run_sub_updater(context):
     """run_sub_updater runs the /usr/share/mender/install script"""
     log.info(f"Running the sub-updater script at {settings.PATHS.install_script}")
     if not os.path.exists(settings.PATHS.install_script):
         log.error(f"No install script found at '{settings.PATHS.install_script}'")
+        #report_no_install_script(context)
         return False
     try:
         # Store the deployment ID in the update lockfile
         with open(settings.PATHS.lockfile_path, "w") as f:
-            f.write(deployment_id)
+            f.write(context.deployment.ID)
         subprocess.Popen(
             [
                 f"{settings.PATHS.install_script}",
@@ -43,3 +44,22 @@ def run_sub_updater(deployment_id: str) -> bool:
         )
         log.error(f"Error {e}")
     return False
+
+def report_no_install_script(context):
+
+    jwt = authorize.request(
+        context.config.ServerURL,
+        context.config.TenantToken,
+        context.identity_data,
+        context.private_key,
+        context.config.ServerCertificate,
+    )
+
+    return deployments.report(
+            context.config.ServerURL,
+            "failure",
+            context.deployment_id,
+            context.config.ServerCertificate,
+            jwt
+    )
+    
