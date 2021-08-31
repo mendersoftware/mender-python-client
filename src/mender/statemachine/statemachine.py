@@ -364,10 +364,14 @@ class ArtifactRollbackReboot(State):
 class ArtifactFailure(State):
     def run(self, context):
         log.info("Running the ArtifactFailure state...")
-        log.warning('The Artifact has not been properly downloaded due to lack of Internet access or a server failure.')
-        log.warning("The next attemp of the update will happen after the UpdatePollIntervalSeconds config variable.")
+        log.warning(
+            "The Artifact has not been properly downloaded due to lack of Internet access or a server failure."
+        )
+        log.warning(
+            "The next attemp of the update will happen after the UpdatePollIntervalSeconds config variable."
+        )
         return _UpdateDone()
-        #raise UnsupportedState("ArtifactFailure is unhandled by the API client")
+        # raise UnsupportedState("ArtifactFailure is unhandled by the API client")
 
 
 class _UpdateDone(State):
