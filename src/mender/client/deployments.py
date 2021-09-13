@@ -239,7 +239,7 @@ def download_and_resume(
                     date_start = datetime.now()
                     for data in response.iter_content(
                         chunk_size=DOWNLOAD_CHUNK_SIZE_BYTES
-                    ):  # 1MiB at a time
+                    ):  # 1 chunk at a time
                         if not data:
                             break
                         fh.write(data)
