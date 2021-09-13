@@ -174,6 +174,10 @@ class TestStates:
             m.setattr(sys, "exit", lambda exit_code: exit_code)
             artifact_install.run(ctx)
 
+    def test_artifact_failure(self, ctx):
+        artifact_failure_state = statemachine.ArtifactFailure()
+        assert isinstance(artifact_failure_state.run(ctx), statemachine._UpdateDone)
+
     def test_unsupported_states(self, ctx):
         with pytest.raises(statemachine.UnsupportedState):
             statemachine.ArtifactReboot().run(ctx)
@@ -183,8 +187,6 @@ class TestStates:
             statemachine.ArtifactRollback().run(ctx)
         with pytest.raises(statemachine.UnsupportedState):
             statemachine.ArtifactRollbackReboot().run(ctx)
-        with pytest.raises(statemachine.UnsupportedState):
-            statemachine.ArtifactFailure().run(ctx)
 
 
 class TestStateMachines:
