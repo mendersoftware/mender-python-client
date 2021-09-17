@@ -11,11 +11,13 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-import logging as log
+import logging
 
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKeyWithSerialization
 
-import mender.security.rsa as rsa
+from mender.security import rsa
+
+log = logging.getLogger(__name__)
 
 
 def generate_key() -> RSAPrivateKeyWithSerialization:

@@ -12,13 +12,15 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import json
-import logging as log
+import logging
 import logging.handlers
 import os
 import os.path
 from typing import List
 
-import mender.settings.settings as settings
+from mender.settings import settings
+
+log = logging.getLogger(__name__)
 
 
 class JSONFormatter(logging.Formatter):
@@ -44,19 +46,18 @@ class JSONFormatter(logging.Formatter):
 
 class DeploymentLogHandler(logging.FileHandler):
     def __init__(self):
-        self.enabled = False
         self.log_dir = settings.PATHS.deployment_log
         filename = os.path.join(self.log_dir, "deployment.log")
         self.log_file = filename
         super().__init__(filename=filename)
         super().setFormatter(JSONFormatter())
-
-    def handle(self, record):
-        if self.enabled:
-            super().handle(record)
+        self._reset()
+        self.disable()
 
     def enable(self, reset=False):
-        self.enabled = True
+        # Sets the log level to 0.
+        # All messages that the logger emits to the deployment log handler will be logged.
+        self.setLevel(logging.NOTSET)
         if reset:
             self._reset()
 
@@ -67,7 +68,7 @@ class DeploymentLogHandler(logging.FileHandler):
             pass
 
     def disable(self):
-        self.enabled = False
+        self.setLevel(logging.CRITICAL + 1)
 
     def marshal(self) -> List[str]:
         """Marshal the logs to the format required by the deployment endpoint"""
@@ -94,6 +95,4 @@ def add_sub_updater_log(log_file):
             "The log_file: %s was not found."
             + "No logs from the sub-updater will be reported."
         )
-        log.error(
-            log_str, log_file,
-        )
+        log.error(log_str, log_file)

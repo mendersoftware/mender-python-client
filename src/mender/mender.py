@@ -12,17 +12,17 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import argparse
-import logging as log
+import logging
 import sys
 
-import mender.bootstrap.bootstrap as bootstrap
-import mender.client.authorize as authorize
-import mender.client.deployments as deployments
-import mender.settings.settings as settings
-import mender.statemachine.statemachine as statemachine
-
 from mender._version import __version__ as package_version
-from mender.log.log import DeploymentLogHandler
+from mender.bootstrap import bootstrap
+from mender.client import authorize, deployments
+from mender.log import menderlogger
+from mender.settings import settings
+from mender.statemachine import statemachine
+
+log = logging.getLogger(__name__)
 
 
 def run_daemon(args):
@@ -90,51 +90,20 @@ def report(args):
             sys.exit(1)
     elif args.failure:
         log.info("Reporting a failed update to the Mender server")
-        update_handlers = [
-            handler
-            for handler in log.getLogger("").handlers
-            if isinstance(handler, DeploymentLogHandler)
-        ]
-        assert (
-            len(update_handlers) == 1
-        ), "Something is wrong with the setup of the DeploymentLogHandler"
-        deployment_log_handler = update_handlers[0]
-        deployment_log_handler.enable()
+        log.parent.deployment_log_handler.enable()
         if not deployments.report(
             context.config.ServerURL,
             deployments.STATUS_FAILURE,
             deployment_id,
             context.config.ServerCertificate,
             jwt,
-            deployment_log_handler,
+            log.parent.deployment_log_handler,
         ):
             log.error("Failed to report the failed update status to the Mender server")
             sys.exit(1)
     else:
         log.error("No report status given")
         sys.exit(1)
-
-
-def setup_log(args):
-    level = {
-        "debug": log.DEBUG,
-        "info": log.INFO,
-        "warning": log.WARNING,
-        "error": log.ERROR,
-        "critical": log.CRITICAL,
-    }.get(args.log_level, log.INFO)
-    handlers = []
-    syslogger = log.NullHandler() if args.no_syslog else log.handlers.SysLogHandler()
-    handlers.append(syslogger)
-    if args.log_file:
-        handlers.append(log.FileHandler(args.log_file))
-    deployment_log_handler = DeploymentLogHandler()
-    handlers.append(deployment_log_handler)
-    root_logger = log.getLogger("")
-    root_logger.setLevel(level)
-    for handler in handlers:
-        root_logger.addHandler(handler)
-    log.info(f"Log level set to {log.getLevelName(level)}")
 
 
 def main(testargs=None):
@@ -189,9 +158,6 @@ def main(testargs=None):
         help="Mender state data DIRECTORY path.",
         default="/var/lib/mender",
     )
-    #
-    # Logging setup
-    #
     global_options.add_argument(
         "--log-file", "-L", help="FILE to log to.", metavar="FILE"
     )
@@ -215,9 +181,6 @@ def main(testargs=None):
         "--version", "-v", help="print the version", default=False, action="store_true"
     )
     args = parser.parse_args(testargs)
-    log.basicConfig(
-        datefmt="%Y-%m-%d %H:%M:%S", format="%(asctime)s %(levelname)-8s %(message)s",
-    )
     if args.version:
         run_version(args)
         return
@@ -227,7 +190,7 @@ def main(testargs=None):
     else:
         log.info("Data store set to: '/var/lib/mender'")
         settings.PATHS = settings.Path()
-    setup_log(args)
+    menderlogger.setup(args)
     if "func" not in vars(args):
         parser.print_usage()
         return

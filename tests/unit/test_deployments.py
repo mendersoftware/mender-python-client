@@ -12,15 +12,14 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import os
 import hashlib
-
-import requests
+import os
 
 import pytest
+import requests
 from werkzeug.wrappers import Response
 
-import mender.client.deployments as deployments
+from mender.client import deployments
 
 
 class CustomContentLengthResponse(Response):
@@ -101,11 +100,11 @@ class TestDeploymentsMisc:
 
 @pytest.fixture(scope="class")
 def tweak_download_resume_intervals(request):
-    orig_download_resume_min_interval = deployments.DOWNLOAD_RESUME_MIN_INTERVAL
-    orig_download_resume_max_interval = deployments.DOWNLOAD_RESUME_MAX_INTERVAL
+    orig_download_resume_min_interval = deployments.DOWNLOAD_RESUME_MIN_INTERVAL_SECONDS
+    orig_download_resume_max_interval = deployments.DOWNLOAD_RESUME_MAX_INTERVAL_SECONDS
 
-    deployments.DOWNLOAD_RESUME_MIN_INTERVAL = 2
-    deployments.DOWNLOAD_RESUME_MAX_INTERVAL = 5
+    deployments.DOWNLOAD_RESUME_MIN_INTERVAL_SECONDS = 2
+    deployments.DOWNLOAD_RESUME_MAX_INTERVAL_SECONDS = 5
 
     def fin():
         deployments.DOWNLOAD_RESUME_MIN_INTERVAL = orig_download_resume_min_interval

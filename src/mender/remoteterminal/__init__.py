@@ -11,18 +11,3 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
-import logging
-from typing import Optional
-
-from mender.scripts.aggregator.aggregator import ScriptKeyValueAggregator
-
-log = logging.getLogger(__name__)
-
-
-def get(path: str) -> Optional[dict]:
-    try:
-        artifact_info = ScriptKeyValueAggregator(path).collect(unique_keys=True)
-        return artifact_info
-    except FileNotFoundError:
-        log.error("No artifact_info file found in {path}")
-        return None

@@ -12,10 +12,12 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
-import logging as log
 
 from mender.scripts.aggregator.aggregator import ScriptKeyValueAggregator
+
+log = logging.getLogger()
 
 
 def aggregate(path: str) -> dict:

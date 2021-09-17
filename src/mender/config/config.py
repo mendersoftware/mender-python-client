@@ -12,8 +12,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 import json
-import logging as log
+import logging
 from typing import Optional
+
+log = logging.getLogger(__name__)
 
 
 class NoConfigurationFileError(Exception):
@@ -31,6 +33,8 @@ class Config:
     UpdatePollIntervalSeconds = 5
     RetryPollIntervalSeconds = 5
     ServerCertificate = ""
+    RemoteTerminal = False
+    ShellCommand = "/bin/sh"
 
     def __init__(self, global_conf: dict, local_conf: dict):
         vals = {**global_conf, **local_conf}
@@ -70,6 +74,15 @@ class Config:
             elif k == "ServerCertificate":
                 log.debug(f"ServerCertificate: {v}")
                 self.ServerCertificate = v
+            elif k == "RemoteTerminal":
+                log.debug(f"RemoteTerminal: {v}")
+                self.RemoteTerminal = (str)(v).lower() in ["true", "1", "yes"]
+            elif k == "ShellCommand":
+                log.debug(f"ShellCommand: {v}")
+                self.ShellCommand = v
+            elif k == "User":
+                log.debug(f"User: {v}")
+                self.User = v
             else:
                 log.error(f"The key {k} is not recognized by the Python client")
 

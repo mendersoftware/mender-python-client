@@ -9,7 +9,8 @@ mkdir -p yocto
 cd yocto
 
 rm -rf poky
-git clone -b ${YOCTO_BRANCH:-dunfell} https://github.com/mendersoftware/poky
+# Temporarily build from upstream
+git clone -b ${YOCTO_BRANCH:-dunfell} git://git.yoctoproject.org/poky
 rm -rf meta-openembedded
 git clone -b ${YOCTO_BRANCH:-dunfell} https://github.com/openembedded/meta-openembedded.git
 rm -rf meta-mender

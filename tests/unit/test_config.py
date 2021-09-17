@@ -12,11 +12,13 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import os
 import json
 import logging as log
+import os
+
 import pytest
-import mender.config.config as config
+
+from mender.config import config
 
 GLOBAL_TESTDATA = {
     "InventoryPollIntervalSeconds": 200,

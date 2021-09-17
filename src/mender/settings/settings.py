@@ -13,7 +13,6 @@
 #    limitations under the License.
 import os.path
 
-
 SLEEP_INTERVAL = 60
 
 
@@ -22,7 +21,7 @@ class Path:
 
     Usage::
 
-      >>> import mender.settings.settings as settings
+      >>> from mender.settings import settings
       >>> private_key_location = settings.PATHS.key
 
 
@@ -54,6 +53,11 @@ class Path:
         self.lockfile_path = self.data_store + "/update.lock"
 
         self.install_script = "/usr/share/mender/install"
+
+        self.local_remote_terminal_conf = os.path.join(self.conf, "mender-connect.conf")
+        self.global_remote_terminal_conf = os.path.join(
+            self.data_store, "mender-connect.conf"
+        )
 
 
 # Global singleton

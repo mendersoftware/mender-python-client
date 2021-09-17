@@ -10,11 +10,43 @@ Mender Python Client: A Python implementation of the Mender client
 
 ## Overview
 
+### Functionality
+
+#### Update daemon
+
 The _Mender Python Client_ is an API client, which is responsible for
 interacting with the Mender server, and downloading the Artifact for a
 deployment to a specified location on the device, and then exit until a local
 sub-updater on the device has handled the update, reported the update status
 (failed, or success), and re-started the _Mender Python Client_ thereafter.
+
+**IMPORTANT:** The Mender Python Client is not a fully featured, or supported client
+ implementation. This means that new Mender features are not expected to land
+ in the Python implementation, even though they are available in the
+ mainstream Go implementation of the client. This means that as long as possible
+ it is **_highly recommended_** to use the Golang version of the Mender client. The
+ Python version should only be used if compiling the Mender client for your
+ architecture is impossible.
+
+
+#### Remote terminal
+
+It also has support for remote terminal connectivity, as described
+[here](https://docs.mender.io/add-ons/remote-terminal).
+
+In short, this allows you to connect to the client via the Mender UI or through
+the [`mender-cli`](https://github.com/mendersoftware/mender-cli) tool, and
+connect to your device as if you had an ssh server running on the device.
+
+The remote terminal is configured via the file /etc/mender/mender-connect.conf.
+An example configuration looks like:
+
+```
+{
+    "RemoteTerminal": "True",
+    "ShellCommand": "/bin/bash"
+}
+```
 
 ## Workings
 
@@ -150,12 +182,12 @@ issue. We thank you in advance for your cooperation.
 * Fork us on [GitHub](https://github.com/mendersoftware)
 * Create an issue in the [bugtracker](https://tracker.mender.io/projects/MEN)
 * Email us at [contact@mender.io](mailto:contact@mender.io)
-* Connect to the [#mender IRC channel on Freenode](http://webchat.freenode.net/?channels=mender)
+* Connect to the [#mender IRC channel on Libera](https://web.libera.chat/?#mender)
 
 
 ## Authors
 
-[List](https://github.com/mendersoftware/mender-python-client/graphs/contributors)!
+[List of contributors](https://github.com/mendersoftware/mender-python-client/graphs/contributors)
 
 The [Mender](https://mender.io) project is sponsored by [Northern.tech
 AS](https://northern.tech).
