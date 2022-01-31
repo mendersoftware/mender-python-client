@@ -16,7 +16,7 @@ toml==0.10.2
 urllib3==1.26.7
 pytest==6.2.5
 pytest-cov==2.12.1
-pytest-httpserver==1.0.1
+pytest-httpserver==1.0.4
 coveralls==3.2.0
 msgpack==1.0.2
 websockets==10.0
