@@ -9,7 +9,7 @@ packaging==21.0
 pluggy==0.13.1
 py==1.10.0
 pycparser==2.20
-pyparsing==2.4.7
+pyparsing==3.0.9
 requests==2.26.0
 six==1.16.0
 toml==0.10.2
