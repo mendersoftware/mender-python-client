@@ -4,7 +4,7 @@ charset-normalizer==2.1.1
 coverage==6.5.0
 coveralls==3.3.1
 docopt==0.6.2
-exceptiongroup==1.0.0rc9
+exceptiongroup==1.0.0
 idna==3.4
 iniconfig==1.1.1
 MarkupSafe==2.1.1
