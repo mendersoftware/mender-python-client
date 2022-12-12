@@ -12,7 +12,7 @@ packaging==21.3
 pluggy==1.0.0
 pyparsing==3.0.9
 pytest==7.2.0
-pytest-asyncio==0.20.1
+pytest-asyncio==0.20.3
 pytest-cov==4.0.0
 pytest-httpserver==1.0.6
 pytest-mock==3.10.0
