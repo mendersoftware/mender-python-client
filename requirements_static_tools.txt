@@ -4,7 +4,7 @@ lazy-object-proxy==1.7.1
 mccabe==0.6.1
 mypy==0.982
 mypy-extensions==0.4.3
-pylint==2.9.6
+pylint==2.16.1
 toml==0.10.2
 tomli==2.0.1
 types-cryptography==3.3.23.1
